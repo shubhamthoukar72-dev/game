@@ -5,11 +5,27 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 
-GAME_DIRECTORY = Path(__file__).parent / "game"
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+GAME_DIRECTORY = next(
+    (
+        candidate
+        for candidate in (
+            SCRIPT_DIRECTORY / "game",
+            SCRIPT_DIRECTORY.parent / "game",
+        )
+        if candidate.is_dir()
+    ),
+    SCRIPT_DIRECTORY / "game",
+)
 ADDRESS = ("127.0.0.1", 8080)
 
 
 def main() -> None:
+    if not GAME_DIRECTORY.is_dir():
+        raise FileNotFoundError(
+            f"Game assets were not found. Expected a 'game' folder beside "
+            f"{Path(__file__).name} or in its parent directory."
+        )
     handler = partial(SimpleHTTPRequestHandler, directory=str(GAME_DIRECTORY))
     server = ThreadingHTTPServer(ADDRESS, handler)
     print(f"Number game running at http://{ADDRESS[0]}:{ADDRESS[1]}")
@@ -24,3 +40,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
